@@ -1,0 +1,29 @@
+name: Transcript to AI Voice
+
+on:
+  workflow_dispatch:
+    inputs:
+      access_token:
+        description: 'Access token to run workflow'
+        required: true
+        default: ''
+      transcript:
+        description: 'Transcript to convert to AI voice'
+        required: true
+        default: ''
+  repository_dispatch:
+    types: [run-transcript-to-ai-voice]
+
+jobs:
+  validate-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check access token
+        env:
+          SECRET_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          if [ "${{ github.event.client_payload.access_token || inputs.access_token }}" != "$SECRET_ACCESS_TOKEN" ]; then
+            echo "Invalid token to run workflow. Exiting."
+            exit 1
+          fi
+          echo "Token validated successfully."

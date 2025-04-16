@@ -18,7 +18,7 @@ jobs:
   validate-parameters:
     runs-on: ubuntu-latest
     outputs:
-      sentences: ${{ steps.validate-params.outputs.sentences }} # Define output
+      sentences-json: ${{ steps.validate-params.outputs.sentences-json }}
     steps:
       - name: Validate parameters
         id: validate-params
@@ -45,9 +45,16 @@ jobs:
           fi
 
           # Validate transcript length
+          if [ -z "$transcript" ]; then
+            echo "Transcript is empty."
+            echo "::set-output name=sentences-json::[]"
+            exit 0
+          fi
+
           if [ ${#transcript} -ge 300 ]; then
             echo "Transcript exceeds 300 characters."
-            exit 1
+            echo "::set-output name=sentences-json::[]"
+            exit 0
           fi
 
           # Split transcript into sentences
@@ -56,7 +63,8 @@ jobs:
           # Validate sentence count
           if [ "${#sentences[@]}" -gt 10 ]; then
             echo "Transcript contains more than 10 sentences."
-            exit 1
+            echo "::set-output name=sentences-json::[]"
+            exit 0
           fi
 
           # Prepare JSON array of sentences
@@ -69,9 +77,9 @@ jobs:
           done
           sentences_json="${sentences_json%,}]" # Remove trailing comma and close JSON array
 
-          echo "Sentences: $sentences_json"
-          echo "sentences=$sentences_json" >> $GITHUB_OUTPUT
-  
+          echo "Sentences JSON: $sentences_json"
+          echo "::set-output name=sentences-json::$sentences_json"
+
   run-text-to-speech-action:
     needs: validate-parameters
     runs-on: ubuntu-latest

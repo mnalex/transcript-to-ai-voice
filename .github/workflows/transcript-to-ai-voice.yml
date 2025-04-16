@@ -87,6 +87,9 @@ jobs:
       matrix:
         sentence: ${{ fromJson(needs.validate-parameters.outputs.sentences-json) }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Run text to speech action for sentence
         uses: ./generate-text-to-speech
         with:

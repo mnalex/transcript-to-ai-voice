@@ -15,10 +15,10 @@ on:
     types: [run-transcript-to-ai-voice]
 
 jobs:
-  process-transcript:
+  validate-parameters:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate and process transcript
+      - name: Validate parameters
         env:
           SECRET_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
@@ -56,10 +56,27 @@ jobs:
             exit 1
           fi
 
-          # Export sentences for use in subsequent steps
-          for i in "${!sentences[@]}"; do
-            sentence=$(echo "${sentences[$i]}" | xargs) # Trim whitespace
-            if [ -n "$sentence" ]; then
-              echo "sentence_$i=$sentence" >> $GITHUB_ENV
+          # Prepare JSON array of sentences
+          sentences_json="["
+          for sentence in "${sentences[@]}"; do
+            trimmed_sentence=$(echo "$sentence" | xargs) # Trim whitespace
+            if [ -n "$trimmed_sentence" ]; then
+              sentences_json="$sentences_json\"$trimmed_sentence\","
             fi
           done
+          sentences_json="${sentences_json%,}]" # Remove trailing comma and close JSON array
+
+          echo "Sentences JSON: $sentences_json"
+          echo "::set-output name=sentences-json::$sentences_json"
+  
+  run-text-to-speech-action:
+    needs: validate-parameters
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sentence: ${{ fromJson(needs.validate-parameters.outputs.sentences-json) }}
+    steps:
+      - name: Run text to speech action for sentence
+        uses: ./generate-text-to-speech
+        with:
+          sentence: ${{ matrix.sentence }}

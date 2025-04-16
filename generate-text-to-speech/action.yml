@@ -1,0 +1,15 @@
+name: 'Generate text to speech'
+description: 'Converts a sentence text into speech'
+inputs:
+  sentence:
+    description: 'Sentence to convert from text to speech'
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Print sentence
+      run: echo "Sentence: ${{ inputs.sentence }}"

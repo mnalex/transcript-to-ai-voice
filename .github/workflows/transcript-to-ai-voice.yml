@@ -70,7 +70,7 @@ jobs:
           sentences_json="${sentences_json%,}]" # Remove trailing comma and close JSON array
 
           echo "Sentences: $sentences_json"
-          echo "sentences=$sentences_json" >> $GITHUB_ENV
+          echo "sentences=$sentences_json" >> $GITHUB_OUTPUT
   
   run-text-to-speech-action:
     needs: validate-parameters

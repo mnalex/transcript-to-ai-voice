@@ -17,8 +17,11 @@ on:
 jobs:
   validate-parameters:
     runs-on: ubuntu-latest
+    outputs:
+      sentences-json: ${{ steps.validate-params.outputs.sentences-json }} # Define output
     steps:
       - name: Validate parameters
+        id: validate-params
         env:
           SECRET_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
@@ -67,7 +70,7 @@ jobs:
           sentences_json="${sentences_json%,}]" # Remove trailing comma and close JSON array
 
           echo "Sentences JSON: $sentences_json"
-          echo "::set-output name=sentences-json::$sentences_json"
+          echo "sentences-json=$sentences_json" >> $GITHUB_ENV
   
   run-text-to-speech-action:
     needs: validate-parameters

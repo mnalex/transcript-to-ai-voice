@@ -18,7 +18,7 @@ jobs:
   validate-parameters:
     runs-on: ubuntu-latest
     outputs:
-      sentences: ${{ steps.validate-params.outputs.sentences-json }} # Define output
+      sentences: ${{ steps.validate-params.outputs.sentences }} # Define output
     steps:
       - name: Validate parameters
         id: validate-params

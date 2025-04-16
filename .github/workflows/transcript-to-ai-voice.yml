@@ -15,15 +15,51 @@ on:
     types: [run-transcript-to-ai-voice]
 
 jobs:
-  validate-token:
+  process-transcript:
     runs-on: ubuntu-latest
     steps:
-      - name: Check access token
+      - name: Validate and process transcript
         env:
           SECRET_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          if [ "${{ github.event.client_payload.access_token || inputs.access_token }}" != "$SECRET_ACCESS_TOKEN" ]; then
-            echo "Invalid token to run workflow. Exiting."
+          # Determine event type and extract inputs
+          event_name="${{ github.event_name }}"
+          if [ "$event_name" = "workflow_dispatch" ]; then
+            access_token="${{ inputs.access_token }}"
+            transcript="${{ inputs.transcript }}"
+          elif [ "$event_name" = "repository_dispatch" ]; then
+            access_token="${{ github.event.client_payload.access_token }}"
+            transcript="${{ github.event.client_payload.transcript }}"
+          else
+            echo "Unsupported event type."
             exit 1
           fi
-          echo "Token validated successfully."
+
+          # Validate access token
+          if [ "$access_token" != "$SECRET_ACCESS_TOKEN" ]; then
+            echo "Invalid token to run workflow."
+            exit 1
+          fi
+
+          # Validate transcript length
+          if [ ${#transcript} -ge 300 ]; then
+            echo "Transcript exceeds 300 characters."
+            exit 1
+          fi
+
+          # Split transcript into sentences
+          IFS='.' read -ra sentences <<< "$transcript"
+
+          # Validate sentence count
+          if [ "${#sentences[@]}" -gt 10 ]; then
+            echo "Transcript contains more than 10 sentences."
+            exit 1
+          fi
+
+          # Export sentences for use in subsequent steps
+          for i in "${!sentences[@]}"; do
+            sentence=$(echo "${sentences[$i]}" | xargs) # Trim whitespace
+            if [ -n "$sentence" ]; then
+              echo "sentence_$i=$sentence" >> $GITHUB_ENV
+            fi
+          done
